@@ -24,7 +24,6 @@ add_tag = lambda fname, t: mod_tag(fname, t, 'append')
 del_tag = lambda fname, t: mod_tag(fname, t, 'remove')
 
 def clear(fname):
-    print fname
     xattr.remove(fname, TAGS)
 
 if __name__ == '__main__':
@@ -48,6 +47,10 @@ if __name__ == '__main__':
     s = sum(map(int, map(bool, (a.add, a.delete, a.clear))))
     if s > 1:
         print >>sys.stderr, 'Too many options.'
+        parser.print_help()
+        exit(1)
+    if s == 0:
+        print >>sys.stderr, 'Too little options.'
         parser.print_help()
         exit(1)
 
