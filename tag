@@ -10,6 +10,7 @@ import os
 import os.path
 
 def mod_tag(fname, t, op):
+    print 'Working on', fname
     if TAGS in xattr.list(fname):
         tags = xattr.get(fname, TAGS).split(',')
     else:
@@ -26,6 +27,20 @@ del_tag = lambda fname, t: mod_tag(fname, t, 'remove')
 def clear(fname):
     xattr.remove(fname, TAGS)
 
+def list_tags(fname):
+    print '%s:' % fname,
+    try:
+        print ' .'.join(xattr.get(fname, TAGS).split(','))
+    except IOError, e:
+        print
+
+def filter_tags(fname, tag):
+    try:
+        if tag in xattr.get(fname, TAGS).split(','):
+            print fname
+    except IOError:
+        return False
+
 if __name__ == '__main__':
     import argparse
 
@@ -39,11 +54,14 @@ if __name__ == '__main__':
     parser.add_argument('-C', '--clear', help='Clear all tags', action='store_true')
     parser.add_argument('-r', '-R', '--recursive', help='Recursively apply'
         ' operation', action='store_true')
+    parser.add_argument('-l', '--list', help='List tags',
+        action='store_true')
+    parser.add_argument('-f', '--filter', help='Filter on tag', type=str, default=None)
 
     a = parser.parse_args()
     files = a.file
 
-    s = sum(map(int, map(bool, (a.add, a.delete, a.clear))))
+    s = sum(map(int, map(bool, (a.add, a.delete, a.clear, a.list, a.filter))))
     if s > 1:
         print >>sys.stderr, 'Too many options.'
         parser.print_help()
@@ -59,6 +77,10 @@ if __name__ == '__main__':
         fnc = lambda name: del_tag(name, a.delete)
     elif a.clear:
         fnc = clear
+    elif a.list:
+        fnc = list_tags
+    elif a.filter:
+        fnc = lambda name: filter_tags(name, a.filter)
 
 
     if a.recursive:
@@ -68,7 +90,6 @@ if __name__ == '__main__':
                     rf = lambda y: os.path.join(r, y)
                     map(fnc, map(rf, f))
                     map(fnc, map(rf, d))
-            else:
-                fnc(fi)
+            fnc(fi)
     else:
         map(fnc, files)
