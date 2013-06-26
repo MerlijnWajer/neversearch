@@ -10,7 +10,6 @@ import os
 import os.path
 
 def mod_tag(fname, t, op):
-    print 'Working on', fname
     if TAGS in xattr.list(fname):
         tags = xattr.get(fname, TAGS).split(',')
     else:
