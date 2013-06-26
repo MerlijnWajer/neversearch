@@ -69,6 +69,7 @@ if __name__ == '__main__':
                     rf = lambda y: os.path.join(r, y)
                     map(fnc, map(rf, f))
                     map(fnc, map(rf, d))
-
+            else:
+                fnc(fi)
     else:
         map(fnc, files)
