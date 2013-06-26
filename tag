@@ -30,7 +30,6 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser(description='Neversearch',
-    usage = '',
     version='0.01')
     parser.add_argument('file', help='', nargs='+')
     parser.add_argument('-a', '--add', type=str, help='Add a tag; can be comma'
