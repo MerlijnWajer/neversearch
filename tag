@@ -22,7 +22,7 @@ clear = lambda fname: xattr.remove(fname, TAGS)
 def list_tags(fname):
     print '%s:' % fname,
     try:
-        print ' .'.join(xattr.get(fname, TAGS).split(','))
+        print ' ,'.join(xattr.get(fname, TAGS).split(','))
     except IOError, e:
         print
 
