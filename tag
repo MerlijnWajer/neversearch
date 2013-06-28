@@ -2,12 +2,7 @@
 #encoding: utf-8
 
 TAGS = 'user.tags'
-
-import xattr
-import sys
-
-import os
-import os.path
+import xattr, sys, os, os.path, re
 
 def mod_tag(fname, t, op):
     if TAGS in xattr.list(fname):
@@ -22,9 +17,7 @@ def mod_tag(fname, t, op):
 
 add_tag = lambda fname, t: mod_tag(fname, t, 'append')
 del_tag = lambda fname, t: mod_tag(fname, t, 'remove')
-
-def clear(fname):
-    xattr.remove(fname, TAGS)
+clear = lambda fname: xattr.remove(fname, TAGS)
 
 def list_tags(fname):
     print '%s:' % fname,
@@ -33,10 +26,13 @@ def list_tags(fname):
     except IOError, e:
         print
 
-def filter_tags(fname, tag):
+def filter_tags(fname, regex, hr):
     try:
-        if tag in xattr.get(fname, TAGS).split(','):
-            print fname
+        tags = xattr.get(fname, TAGS).split(',')
+        for tag in tags:
+            if regex.match(tag):
+                print fname, '(' + tag + ')' if hr else ''
+                break
     except IOError:
         return False
 
@@ -44,7 +40,7 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser(description='Neversearch',
-    version='0.01')
+        version='0.01')
     parser.add_argument('file', help='', nargs='+')
     parser.add_argument('-a', '--add', type=str, help='Add a tag; can be comma'
         ' seperated (without spaces)', default=None)
@@ -53,9 +49,13 @@ if __name__ == '__main__':
     parser.add_argument('-C', '--clear', help='Clear all tags', action='store_true')
     parser.add_argument('-r', '-R', '--recursive', help='Recursively apply'
         ' operation', action='store_true')
-    parser.add_argument('-l', '--list', help='List tags',
+    parser.add_argument('-l', '--list', help='List tags', action='store_true')
+    parser.add_argument('-f', '--filter', help='Filter on tag (regex)',
+        type=str, default=None)
+    parser.add_argument('-H', '--human-readable', help='Human readable; may'
+        ' mess with parseability', action='store_true', dest='human')
+    parser.add_argument('-i', '--ignore-case', help='Ignore casing for filter',
         action='store_true')
-    parser.add_argument('-f', '--filter', help='Filter on tag', type=str, default=None)
 
     a = parser.parse_args()
     files = a.file
@@ -66,7 +66,7 @@ if __name__ == '__main__':
         parser.print_help()
         exit(1)
     if s == 0:
-        print >>sys.stderr, 'Too little options.'
+        print >>sys.stderr, 'Too few options.'
         parser.print_help()
         exit(1)
 
@@ -79,8 +79,8 @@ if __name__ == '__main__':
     elif a.list:
         fnc = list_tags
     elif a.filter:
-        fnc = lambda name: filter_tags(name, a.filter)
-
+        fnc = lambda name: filter_tags(name, re.compile(a.filter,
+            re.S | (re.I if a.ignore_case else 0)), a.human)
 
     if a.recursive:
         for fi in files:
