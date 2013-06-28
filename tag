@@ -19,12 +19,13 @@ add_tag = lambda fname, t: mod_tag(fname, t, 'append')
 del_tag = lambda fname, t: mod_tag(fname, t, 'remove')
 clear = lambda fname: xattr.remove(fname, TAGS)
 
-def list_tags(fname):
-    print '%s:' % fname,
+def list_tags(fname, lo):
     try:
-        print ', '.join(xattr.get(fname, TAGS).split(','))
+        tags = xattr.get(fname, TAGS).split(',')
+        print '%s:' % fname, ', '.join(tags)
     except IOError, e:
-        print
+        if not lo:
+            print '%s:' % fname
 
 def filter_tags(fname, regex, hr):
     try:
@@ -50,6 +51,7 @@ if __name__ == '__main__':
     parser.add_argument('-r', '-R', '--recursive', help='Recursively apply'
         ' operation', action='store_true')
     parser.add_argument('-l', '--list', help='List tags', action='store_true')
+    parser.add_argument('-L', '--list-only', help='List only files with tags', action='store_true')
     parser.add_argument('-f', '--filter', help='Filter on tag (regex)',
         type=str, default=None)
     parser.add_argument('-H', '--human-readable', help='Human readable; may'
@@ -60,7 +62,8 @@ if __name__ == '__main__':
     a = parser.parse_args()
     files = a.file
 
-    s = sum(map(int, map(bool, (a.add, a.delete, a.clear, a.list, a.filter))))
+    s = sum(map(int, map(bool, (a.add, a.delete, a.clear, a.list, a.filter,
+        a.list_only))))
     if s > 1:
         print >>sys.stderr, 'Too many options.'
         parser.print_help()
@@ -76,8 +79,8 @@ if __name__ == '__main__':
         fnc = lambda name: del_tag(name, a.delete)
     elif a.clear:
         fnc = clear
-    elif a.list:
-        fnc = list_tags
+    elif a.list or a.list_only:
+        fnc = lambda name: list_tags(name, a.list_only)
     elif a.filter:
         fnc = lambda name: filter_tags(name, re.compile(a.filter,
             re.S | (re.I if a.ignore_case else 0)), a.human)
