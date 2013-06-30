@@ -80,14 +80,16 @@ if __name__ == '__main__':
             re.S | (re.I if a.ignore_case else 0)), a.human)] \
             if a.filter else [])
 
-    for fnc in fncs:
-        if a.recursive:
-            for fi in files:
+    if a.recursive:
+        for fi in files:
+            for fnc in fncs:
                 if os.path.isdir(fi):
                     for r, d, f in os.walk(fi):
                         rf = lambda y: os.path.join(r, y)
                         map(fnc, map(rf, f))
                         map(fnc, map(rf, d))
                 fnc(fi)
-        else:
-            map(fnc, files)
+    else:
+        for fi in files:
+            for fnc in fncs:
+                fnc(fi)
