@@ -32,7 +32,7 @@ def filter_tags(fname, regex, hr):
         tags = xattr.get(fname, TAGS).split(',')
         for tag in tags:
             if regex.match(tag):
-                print fname, '(' + tag + ')' if hr else ''
+                print fname + ('(' + tag + ')' if hr else '')
                 break
     except IOError:
         return False
