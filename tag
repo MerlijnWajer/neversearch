@@ -37,12 +37,18 @@ def filter_tags(fname, regex, hr):
     except IOError:
         return False
 
+def stdin_generator(f):
+    for l in f:
+        yield l[:-1]
+    return
+
+
 if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser(description='Neversearch',
         version='0.01')
-    parser.add_argument('file', help='', nargs='+')
+    parser.add_argument('file', help='', nargs='*')
     parser.add_argument('-a', '--add', type=str, help='Add a tag; can be comma'
         ' seperated (without spaces)', default=None)
     parser.add_argument('-d', '--delete', type=str, help='Delete a single tag',
@@ -61,6 +67,10 @@ if __name__ == '__main__':
 
     a = parser.parse_args()
     files = a.file
+
+
+    if not files:
+        files = stdin_generator(sys.stdin)
 
     s = sum(map(int, map(bool, (a.add, a.delete, a.clear, a.list, a.filter,
         a.list_only))))
