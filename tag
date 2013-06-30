@@ -61,10 +61,7 @@ if __name__ == '__main__':
         action='store_true')
 
     a = parser.parse_args()
-    files = a.file
-
-    if not files:
-        files = (l[:-1] for l in sys.stdin)
+    files = a.file if a.file else (l[:-1] for l in sys.stdin)
 
     g = lambda f, b: lambda name: f(name, b)
 
