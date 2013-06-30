@@ -37,11 +37,6 @@ def filter_tags(fname, regex, hr):
     except IOError:
         return False
 
-def stdin_generator(f):
-    for l in f:
-        yield l[:-1]
-    return
-
 
 if __name__ == '__main__':
     import argparse
@@ -69,7 +64,7 @@ if __name__ == '__main__':
     files = a.file
 
     if not files:
-        files = stdin_generator(sys.stdin)
+        files = (l[:-1] for l in sys.stdin)
 
     g = lambda f, b: lambda name: f(name, b)
 
