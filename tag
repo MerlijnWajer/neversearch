@@ -49,10 +49,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Neversearch',
         version='0.01')
     parser.add_argument('file', help='', nargs='*')
-    parser.add_argument('-a', '--add', type=str, help='Add a tag; can be comma'
-        ' seperated (without spaces)', default=None)
-    parser.add_argument('-d', '--delete', type=str, help='Delete a single tag',
-        default=None)
+    parser.add_argument('-a', '--add', help='Add a tag', action='append',
+        default=[])
+    parser.add_argument('-d', '--delete', help='Delete a single tag',
+        action='append', default=[])
     parser.add_argument('-C', '--clear', help='Clear all tags', action='store_true')
     parser.add_argument('-r', '-R', '--recursive', help='Recursively apply'
         ' operation', action='store_true')
@@ -68,40 +68,26 @@ if __name__ == '__main__':
     a = parser.parse_args()
     files = a.file
 
-
     if not files:
         files = stdin_generator(sys.stdin)
 
-    s = sum(map(int, map(bool, (a.add, a.delete, a.clear, a.list, a.filter,
-        a.list_only))))
-    if s > 1:
-        print >>sys.stderr, 'Too many options.'
-        parser.print_help()
-        exit(1)
-    if s == 0:
-        print >>sys.stderr, 'Too few options.'
-        parser.print_help()
-        exit(1)
+    g = lambda f, b: lambda name: f(name, b)
 
-    if a.add:
-        fnc = lambda name: add_tag(name, a.add)
-    elif a.delete:
-        fnc = lambda name: del_tag(name, a.delete)
-    elif a.clear:
-        fnc = clear
-    elif a.list or a.list_only:
-        fnc = lambda name: list_tags(name, a.list_only)
-    elif a.filter:
-        fnc = lambda name: filter_tags(name, re.compile(a.filter,
-            re.S | (re.I if a.ignore_case else 0)), a.human)
+    fncs = [g(add_tag, _) for _ in a.add] + [g(del_tag, d) for d in a.delete] \
+        + ([clear] if a.clear else []) \
+        + ([g(list_tags, a.list_only)] if (a.list or a.list_only) else []) \
+        + ([lambda name: filter_tags(name, re.compile(a.filter, \
+            re.S | (re.I if a.ignore_case else 0)), a.human)] \
+            if a.filter else [])
 
-    if a.recursive:
-        for fi in files:
-            if os.path.isdir(fi):
-                for r, d, f in os.walk(fi):
-                    rf = lambda y: os.path.join(r, y)
-                    map(fnc, map(rf, f))
-                    map(fnc, map(rf, d))
-            fnc(fi)
-    else:
-        map(fnc, files)
+    for fnc in fncs:
+        if a.recursive:
+            for fi in files:
+                if os.path.isdir(fi):
+                    for r, d, f in os.walk(fi):
+                        rf = lambda y: os.path.join(r, y)
+                        map(fnc, map(rf, f))
+                        map(fnc, map(rf, d))
+                fnc(fi)
+        else:
+            map(fnc, files)
