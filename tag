@@ -13,7 +13,10 @@ def mod_tag(fname, t, op):
         getattr(tags, op)(t)
     except ValueError, e:
         print 'Unable to perform %s:' % op, e
-    xattr.set(fname, TAGS, ','.join(set(tags)))
+    j = ','.join(set(tags))
+    xattr.set(fname, TAGS, j)
+    if j == '':
+        xattr.remove(fname, TAGS)
 
 add_tag = lambda fname, t: mod_tag(fname, t, 'append')
 del_tag = lambda fname, t: mod_tag(fname, t, 'remove')
