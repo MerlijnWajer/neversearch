@@ -25,10 +25,15 @@ def mod_tag(fname, t, op):
     if j == '':
         xattr.remove(fname, TAGS)
 
+def clear(fname):
+    try:
+        xattr.remove(fname, TAGS)
+    except IOError:
+        print 'Cannot clear:', fname, 'already cleared?'
+
 # Create add and remove functions from mod_tag function.
 add_tag = lambda fname, t: mod_tag(fname, t, 'append')
 del_tag = lambda fname, t: mod_tag(fname, t, 'remove')
-clear = lambda fname: xattr.remove(fname, TAGS)
 
 def list_tags(fname, lo):
     try:
@@ -49,12 +54,12 @@ def filter_tags(fname, regex, hr):
         return False
 
 def export(fname):
-    print fname, chr(0x0), ','.join(get_tags(fname))
+    print fname + chr(0x0) + ' ' + ','.join(get_tags(fname))
 
 def _import_gen(f):
     for line in f:
         fname = line[:line.find(chr(0x0))]
-        tags = line[line.find(chr(0x0)) + 1:-1].split(',')
+        tags = line[line.find(chr(0x0)) + 2:-1].split(',')
         yield fname, tags
 
 if __name__ == '__main__':
@@ -81,6 +86,7 @@ if __name__ == '__main__':
     parser.add_argument('-E', '--export', help='Export mode', action='store_true')
     parser.add_argument('-I', '--import', help='Import from file', type=str,
         dest='imp', default=None)
+    parser.add_argument('-V', '--verbose', help='Verbose mode', action='store_true')
 
     a = parser.parse_args()
 
@@ -94,6 +100,8 @@ if __name__ == '__main__':
         gen = _import_gen(f)
         for filename, tags in gen:
             for tag in tags:
+                if a.verbose:
+                    print 'Adding tag', repr(tag), 'to', repr(filename)
                 add_tag(filename, tag)
         
         # Done!
