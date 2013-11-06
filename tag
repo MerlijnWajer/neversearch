@@ -4,14 +4,18 @@
 TAGS = 'user.tags'
 import xattr, sys, os, os.path, re
 
+def get_tags(fname):
+    if TAGS in xattr.list(fname):
+        return xattr.get(fname, TAGS).split(',')
+    else:
+        return []
+
+
 def mod_tag(fname, t, op):
     """
     Modify tag; either 'append' or 'remove'. (list operation)
     """
-    if TAGS in xattr.list(fname):
-        tags = xattr.get(fname, TAGS).split(',')
-    else:
-        tags = []
+    tags = get_tags(fname)
     try:
         getattr(tags, op)(t)
     except ValueError, e:
@@ -44,6 +48,14 @@ def filter_tags(fname, regex, hr):
     except IOError:
         return False
 
+def export(fname):
+    print fname, chr(0x0), ','.join(get_tags(fname))
+
+def _import_gen(f):
+    for line in f:
+        fname = line[:line.find(chr(0x0))]
+        tags = line[line.find(chr(0x0)) + 1:-1].split(',')
+        yield fname, tags
 
 if __name__ == '__main__':
     import argparse
@@ -66,8 +78,26 @@ if __name__ == '__main__':
         ' mess with parseability', action='store_true', dest='human')
     parser.add_argument('-i', '--ignore-case', help='Ignore casing for filter',
         action='store_true')
+    parser.add_argument('-E', '--export', help='Export mode', action='store_true')
+    parser.add_argument('-I', '--import', help='Import from file', type=str,
+        dest='imp', default=None)
 
     a = parser.parse_args()
+
+    if a.imp and any((a.export, a.filter, a.list, a.delete, a.add, a.clear,
+        a.list_only, a.human, a.recursive)):
+        print >>sys.stderr, 'Import is not allowed with other options; use -I only'
+        sys.exit(1)
+
+    if a.imp:
+        f = open(a.imp, 'r')
+        gen = _import_gen(f)
+        for filename, tags in gen:
+            for tag in tags:
+                add_tag(filename, tag)
+        
+        # Done!
+        sys.exit(0)
 
     # The files we operate on can be either read from stdin
     # (not at once, but using a generator/iterator)
@@ -91,12 +121,20 @@ if __name__ == '__main__':
     fncs += ([clear] if a.clear else [])
     fncs += ([g(list_tags, a.list_only)] if (a.list or a.list_only) else [])
 
+
     # Build a list of filter functions. Allows regexes, so we compile those
     # and bind them to the functions. Again, each function contains a regex
     # it is supposed to match on
     fncs += ([lambda name: filter_tags(name,
             re.compile(a.filter, re.S | (re.I if a.ignore_case else 0)),
             a.human)] if a.filter else [])
+
+    # If no functions, then we can export
+    if len(fncs) and a.export:
+        print >>sys.stderr, 'Cannot export and apply functions'
+        sys.exit(1)
+    elif len(fncs) == 0 and a.export:
+        fncs += [export]
 
     # For all files ... (if -r, else just apply all functions once)
     if a.recursive:
