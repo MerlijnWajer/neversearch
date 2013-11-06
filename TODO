@@ -1,0 +1,8 @@
+Create man page with sphinx (base on neversearch wiki)
+
+Document:
+* import
+* export
+
+Add:
+* Support for relative/base dir
