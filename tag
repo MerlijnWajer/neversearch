@@ -2,7 +2,7 @@
 #encoding: utf-8
 
 TAGS = 'user.tags'
-import xattr, sys, os, os.path, re
+import xattr, sys, os, os.path, re, errno
 
 def get_tags(fname):
     if TAGS in xattr.list(fname):
@@ -28,8 +28,11 @@ def mod_tag(fname, t, op):
 def clear(fname):
     try:
         xattr.remove(fname, TAGS)
-    except IOError:
-        print 'Cannot clear:', fname, 'already cleared?'
+    except IOError, e:
+        if e.errno == errno.ENODATA:
+            pass
+        else:
+            print 'Cannot clear ``%s'':' % fname, e
 
 # Create add and remove functions from mod_tag function.
 add_tag = lambda fname, t: mod_tag(fname, t, 'append')
