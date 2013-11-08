@@ -57,7 +57,6 @@ add_tag = lambda fname, t: mod_tag(fname, t, 'append')
 del_tag = lambda fname, t: mod_tag(fname, t, 'remove')
 
 def list_tags(fname, lo):
-    print('list:',fname)
     try:
         tags = xattr.get(fname, TAGS).decode('utf-8').split(',')
         print('%s:' % fname, ', '.join(tags))
