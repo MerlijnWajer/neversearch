@@ -54,7 +54,9 @@ def filter_tags(fname, regex, hr):
         return False
 
 def export(fname):
-    print fname + chr(0x0) + ' ' + ','.join(get_tags(fname))
+    tags = get_tags(fname)
+    if len(tags):
+        print fname + chr(0x0) + ' ' + ','.join(tags)
 
 def _import_gen(f):
     for line in f:
