@@ -1,8 +1,6 @@
 Create man page with sphinx (base on neversearch wiki)
 
-Document:
-* import
-* export
-
-Add:
-* Support for relative/base dir
+Implement:
+* Coloured output?
+* --exclude option to exclude paths? Or should people use find?
+  [IMHO; no. People can just use find + grep and pass via stdin]

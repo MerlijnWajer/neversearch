@@ -1,3 +1,15 @@
 See http://hetgrotebos.org/wiki/neversearch
 
 Documentation will follow later; using sphinx-doc.
+
+Useful bash function: (Where mpl is your mplayer2 or mplayer)
+
+    function play(){
+            mpl -- $(tag -f $@ -- *);
+    }
+
+Use like:
+    play metal
+
+Or:
+    play ".*foo.*"
