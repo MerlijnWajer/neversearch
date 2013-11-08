@@ -6,9 +6,13 @@ VERBOSE = False
 import xattr, sys, os, os.path, re, errno
 
 def get_tags(fname):
-    if TAGS in xattr.list(fname):
-        return xattr.get(fname, TAGS).split(',')
-    else:
+    try:
+        if TAGS in xattr.list(fname):
+            return xattr.get(fname, TAGS).split(',')
+        else:
+            return []
+    except IOError, e:
+        print >>sys.stderr, fname, e
         return []
 
 
@@ -20,13 +24,17 @@ def mod_tag(fname, t, op):
     try:
         getattr(tags, op)(t)
     except ValueError, e:
-        print 'Unable to perform %s:' % op, e
+        print >>sys.stderr, 'Unable to perform %s:' % op, e
     if VERBOSE:
         print op, t, 'on', fname
     j = ','.join(set(tags))
-    xattr.set(fname, TAGS, j)
-    if j == '':
-        xattr.remove(fname, TAGS)
+    try:
+        xattr.set(fname, TAGS, j)
+        if j == '':
+            xattr.remove(fname, TAGS)
+    except IOError, e:
+        print >>sys.stderr, fname, e
+
 
 def clear(fname):
     try:
@@ -37,7 +45,7 @@ def clear(fname):
         if e.errno == errno.ENODATA:
             pass
         else:
-            print 'Cannot clear ``%s'':' % fname, e
+            print >>sys.stderr, 'Cannot clear ``%s'':' % fname, e
 
 # Create add and remove functions from mod_tag function.
 add_tag = lambda fname, t: mod_tag(fname, t, 'append')
