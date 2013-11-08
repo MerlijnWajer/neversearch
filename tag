@@ -2,6 +2,7 @@
 #encoding: utf-8
 
 TAGS = 'user.tags'
+VERBOSE = False
 import xattr, sys, os, os.path, re, errno
 
 def get_tags(fname):
@@ -20,6 +21,8 @@ def mod_tag(fname, t, op):
         getattr(tags, op)(t)
     except ValueError, e:
         print 'Unable to perform %s:' % op, e
+    if VERBOSE:
+        print op, t, 'on', fname
     j = ','.join(set(tags))
     xattr.set(fname, TAGS, j)
     if j == '':
@@ -28,6 +31,8 @@ def mod_tag(fname, t, op):
 def clear(fname):
     try:
         xattr.remove(fname, TAGS)
+        if VERBOSE:
+            print 'clear on', fname
     except IOError, e:
         if e.errno == errno.ENODATA:
             pass
@@ -94,6 +99,9 @@ if __name__ == '__main__':
     parser.add_argument('-V', '--verbose', help='Verbose mode', action='store_true')
 
     a = parser.parse_args()
+
+    if a.verbose:
+        VERBOSE = True
 
     if a.imp and any((a.export, a.filter, a.list, a.delete, a.add, a.clear,
         a.list_only, a.human, a.recursive)):
