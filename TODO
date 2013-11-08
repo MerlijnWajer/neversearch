@@ -1,6 +1,8 @@
-Create man page with sphinx (base on neversearch wiki)
+Write:
+* Manual page with sphinx (base on neversearch wiki)
 
 Implement:
+* Python 3 support
 * Coloured output?
 * --exclude option to exclude paths? Or should people use find?
   [IMHO; no. People can just use find + grep and pass via stdin]
