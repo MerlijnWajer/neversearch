@@ -56,8 +56,10 @@ def list_tags(fname, lo):
         tags = xattr.get(fname, TAGS).split(',')
         print '%s:' % fname, ', '.join(tags)
     except IOError, e:
-        if not lo:
+        if e.errno == errno.ENODATA and not lo:
             print '%s:' % fname
+        else:
+            print >>sys.stderr, fname, e
 
 def filter_tags(fname, regex, hr):
     try:
@@ -124,7 +126,7 @@ if __name__ == '__main__':
                 if a.verbose:
                     print 'Adding tag', repr(tag), 'to', repr(filename)
                 add_tag(filename, tag)
-        
+
         # Done!
         sys.exit(0)
 
