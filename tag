@@ -1,18 +1,23 @@
 #!/usr/bin/env python
 #encoding: utf-8
 
+# Python 3 support
+from __future__ import print_function
+
+
 TAGS = 'user.tags'
 VERBOSE = False
 import xattr, sys, os, os.path, re, errno
 
+
 def get_tags(fname):
     try:
-        if TAGS in xattr.list(fname):
-            return xattr.get(fname, TAGS).split(',')
+        if TAGS in (_.decode('utf-8') for _ in xattr.list(fname)):
+            return xattr.get(fname, TAGS).decode('utf-8').split(',')
         else:
             return []
-    except IOError, e:
-        print >>sys.stderr, fname, e
+    except IOError as e:
+        print(fname, e, file=sys.stderr)
         return []
 
 
@@ -23,50 +28,51 @@ def mod_tag(fname, t, op):
     tags = get_tags(fname)
     try:
         getattr(tags, op)(t)
-    except ValueError, e:
-        print >>sys.stderr, 'Unable to perform %s:' % op, e
+    except ValueError as e:
+        print('Unable to perform %s:' % op, e, file=sys.stderr)
     if VERBOSE:
-        print op, t, 'on', fname
+        print(op, t, 'on', fname, file=sys.stderr)
     j = ','.join(set(tags))
     try:
         xattr.set(fname, TAGS, j)
         if j == '':
             xattr.remove(fname, TAGS)
-    except IOError, e:
-        print >>sys.stderr, fname, e
+    except IOError as e:
+        print(fname, e, file=sys.stderr)
 
 
 def clear(fname):
     try:
         xattr.remove(fname, TAGS)
         if VERBOSE:
-            print 'clear on', fname
-    except IOError, e:
+            print('clear on', fname)
+    except IOError as e:
         if e.errno == errno.ENODATA:
             pass
         else:
-            print >>sys.stderr, 'Cannot clear ``%s'':' % fname, e
+            print('Cannot clear ``%s'':' % fname, e, file=sys.stderr)
 
 # Create add and remove functions from mod_tag function.
 add_tag = lambda fname, t: mod_tag(fname, t, 'append')
 del_tag = lambda fname, t: mod_tag(fname, t, 'remove')
 
 def list_tags(fname, lo):
+    print('list:',fname)
     try:
-        tags = xattr.get(fname, TAGS).split(',')
-        print '%s:' % fname, ', '.join(tags)
-    except IOError, e:
+        tags = xattr.get(fname, TAGS).decode('utf-8').split(',')
+        print('%s:' % fname, ', '.join(tags))
+    except IOError as e:
         if e.errno == errno.ENODATA and not lo:
-            print '%s:' % fname
+            print('%s:' % fname)
         else:
-            print >>sys.stderr, fname, e
+            print(fname, e, file=sys.stderr)
 
 def filter_tags(fname, regex, hr):
     try:
-        tags = xattr.get(fname, TAGS).split(',')
+        tags = xattr.get(fname, TAGS).decode('utf-8').split(',')
         for tag in tags:
             if regex.match(tag):
-                print fname + ('(' + tag + ')' if hr else '')
+                print(fname + ('(' + tag + ')' if hr else ''))
                 break
     except IOError:
         return False
@@ -74,7 +80,7 @@ def filter_tags(fname, regex, hr):
 def export(fname):
     tags = get_tags(fname)
     if len(tags):
-        print fname + chr(0x0) + ' ' + ','.join(tags)
+        print(fname + chr(0x0) + ' ' + ','.join(tags))
 
 def _import_gen(f):
     for line in f:
@@ -115,7 +121,8 @@ if __name__ == '__main__':
 
     if a.imp and any((a.export, a.filter, a.list, a.delete, a.add, a.clear,
         a.list_only, a.human, a.recursive)):
-        print >>sys.stderr, 'Import is not allowed with other options; use -I only'
+        print('Import is not allowed with other options; use -I only',
+            file=sys.stderr)
         sys.exit(1)
 
     if a.imp:
@@ -124,7 +131,7 @@ if __name__ == '__main__':
         for filename, tags in gen:
             for tag in tags:
                 if a.verbose:
-                    print 'Adding tag', repr(tag), 'to', repr(filename)
+                    print('Adding tag', repr(tag), 'to', repr(filename))
                 add_tag(filename, tag)
 
         # Done!
@@ -162,7 +169,7 @@ if __name__ == '__main__':
 
     # If no functions, then we can export
     if len(fncs) and a.export:
-        print >>sys.stderr, 'Cannot export and apply functions'
+        print('Cannot export and apply functions', file=sys.stderr)
         sys.exit(1)
     elif len(fncs) == 0 and a.export:
         fncs += [export]
@@ -177,8 +184,10 @@ if __name__ == '__main__':
                 if os.path.isdir(fi):
                     for r, d, f in os.walk(fi):
                         rf = lambda y: os.path.join(r, y)
-                        map(fnc, map(rf, f))
-                        map(fnc, map(rf, d))
+                        for fil in map(rf, f):
+                            fnc(fil)
+                        for fil in map(rf, d):
+                            fnc(fil)
                 fnc(fi)
     else:
         for fi in files:
