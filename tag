@@ -34,9 +34,10 @@ def mod_tag(fname, t, op):
         print(op, t, 'on', fname, file=sys.stderr)
     j = ','.join(set(tags))
     try:
-        xattr.set(fname, TAGS, j)
         if j == '':
             xattr.remove(fname, TAGS)
+        else:
+            xattr.set(fname, TAGS, j)
     except IOError as e:
         print(fname, e, file=sys.stderr)
 
@@ -57,14 +58,9 @@ add_tag = lambda fname, t: mod_tag(fname, t, 'append')
 del_tag = lambda fname, t: mod_tag(fname, t, 'remove')
 
 def list_tags(fname, lo):
-    try:
-        tags = xattr.get(fname, TAGS).decode('utf-8').split(',')
-        print('%s:' % fname, ', '.join(tags))
-    except IOError as e:
-        if e.errno == errno.ENODATA and not lo:
-            print('%s:' % fname)
-        else:
-            print(fname, e, file=sys.stderr)
+    tags = get_tags(fname)
+    if tags or not lo:
+        print('%s:' % fname, ', '.join(get_tags(fname)))
 
 def filter_tags(fname, regex, hr):
     try:
