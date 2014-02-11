@@ -74,7 +74,7 @@ def filter_tags(fname, regex, hr):
 
 def export(fname):
     tags = get_tags(fname)
-    if len(tags):
+    if tags:
         print(fname + chr(0x0) + ' ' + ','.join(tags))
 
 def _import_gen(f):
@@ -163,10 +163,10 @@ if __name__ == '__main__':
             a.human)] if a.filter else [])
 
     # If no functions, then we can export
-    if len(fncs) and a.export:
-        print('Cannot export and apply functions', file=sys.stderr)
-        sys.exit(1)
-    elif len(fncs) == 0 and a.export:
+    if a.export:
+        if fncs:
+            print('Cannot export and apply functions', file=sys.stderr)
+            sys.exit(1)
         fncs += [export]
 
     # For all files ... (if -r, else just apply all functions once)
