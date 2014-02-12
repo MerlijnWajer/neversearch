@@ -5,7 +5,6 @@
 from __future__ import print_function
 
 
-TAGS = 'user.tags'
 VERBOSE = False
 import xattr, sys, os, os.path, re, errno
 
@@ -119,9 +118,13 @@ if __name__ == '__main__':
     parser.add_argument('-E', '--export', help='Export mode', action='store_true')
     parser.add_argument('-I', '--import', help='Import from file', type=str,
         dest='imp', default=None)
+    parser.add_argument('-p', '--prefix', help='Prefix for xattr', type=str,
+        default='tags')
     parser.add_argument('-V', '--verbose', help='Verbose mode', action='store_true')
 
     a = parser.parse_args()
+
+    TAGS = 'user.%s' % a.prefix
 
     if a.verbose:
         VERBOSE = True
