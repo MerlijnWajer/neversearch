@@ -66,15 +66,21 @@ def list_tags(fname, lo):
         else:
             print(fname, e, file=sys.stderr)
 
-def filter_tags(fname, regex, hr):
+def filter_tags(fname, regex, hr, negate):
+    found = False
     try:
         tags = xattr.get(fname, TAGS).decode('utf-8').split(',')
         for tag in tags:
             if regex.match(tag):
-                print(fname + ('(' + tag + ')' if hr else ''))
+                found = True
                 break
     except IOError:
         return False
+
+    if found and not negate:
+        print(fname + ('(' + tag + ')' if hr else ''))
+    elif not found and negate:
+        print(fname + ('(' + tag + ')' if hr else ''))
 
 def export(fname):
     tags = get_tags(fname)
@@ -108,6 +114,8 @@ if __name__ == '__main__':
         ' mess with parseability', action='store_true', dest='human')
     parser.add_argument('-i', '--ignore-case', help='Ignore casing for filter',
         action='store_true')
+    parser.add_argument('-N', '--negate', help='Negate filter',
+            action='store_true', default=False)
     parser.add_argument('-E', '--export', help='Export mode', action='store_true')
     parser.add_argument('-I', '--import', help='Import from file', type=str,
         dest='imp', default=None)
@@ -164,7 +172,7 @@ if __name__ == '__main__':
     # it is supposed to match on
     fncs += ([lambda name: filter_tags(name,
             re.compile(a.filter, re.S | (re.I if a.ignore_case else 0)),
-            a.human)] if a.filter else [])
+            a.human, a.negate)] if a.filter else [])
 
     # If no functions, then we can export
     if len(fncs) and a.export:
